@@ -1,164 +1,74 @@
 “波士顿房价预测”是关于机器学习的一个经典问题，在解决这个问题的方法上，我们选用的第一种模型是决策树模型，下面就是我对于该模型的实际应用的步骤及相关算法：
-1.首先，我们我们需要将已知的房价数据导入，其中用来衡量房价的几个主要的参数包括有‘PM’、'LSTAT'、‘PTRATIO’,分别代表了房屋房间的平均数量、低收入业主的占比和老师和学生群体的人数占比。
-数据导入的代码如下所示：
+1.导入和处理数据
+首先，我们引入必要的库，然后将已知的房价数据导入，其中用来衡量房价的几个主要的参数包括有‘PM’、'LSTAT'、‘PTRATIO’,分别代表了房屋房间的平均数量、低收入业主的占比和老师和学生群体的人数占比。接着将数据的Features和Values分开，以便后续步骤可以分开使用。
 
-# Import libraries necessary for this project
-import numpy as np
-import pandas as pd
-from sklearn.model_selection import ShuffleSplit
 
-# Import supplementary visualizations code visuals.py
-import visuals as vs
 
-# Pretty display for notebooks
-%matplotlib inline
+根据程序我们可以的得到：总共有489个数据每个数据有4个变量
+接着对这些数据进行处理，得出相对应的最大值、最小值、平均值和标准差。
 
-# Load the Boston housing dataset
-data = pd.read_csv('housing.csv')
-prices = data['MEDV']
-features = data.drop('MEDV', axis = 1)
-    
-# Success
-print("Boston housing dataset has {} data points with {} variables each.".format(*data.shape))
-data[:500:80]
 
-根据上面导入的489个数据，我们可以的得到：
-
-          RM     LSTAT    PTRATIO      MEDV
-0        7.287    4.08     12.6       699300
-80       5.787    10.24    16.1       407400
-160      5.928    15.76    17.8       384300
-240      6.619    7.22     19.0       501900
-320      6.425    12.03    20.2       338100
-400      6.649    23.24    20.2       291900
-480      5.693    17.19    21.2       340200
-
-通过对这些数据进行处理，得出相对应的最大值、最小值、平均值和标准差，代码如下：
-a = np.array([prices])
-# TODO: Minimum price of the data
-minimum_price =(a.min()) 
-
-# TODO: Maximum price of the data
-maximum_price =(a.max()) 
-
-# TODO: Mean price of the data
-mean_price = (a.mean())
-
-# TODO: Median price of the data
-median_price = (np.median(a))
-
-# TODO: Standard deviation of prices of the data
-std_price = (a.std())
-
-# Show the calculated statistics
-print("Statistics for Boston housing dataset:\n")
-print("Minimum price: ${}".format(minimum_price)) 
-print("Maximum price: ${}".format(maximum_price))
-print("Mean price: ${}".format(mean_price))
-print("Median price ${}".format(median_price))
-print("Standard deviation of prices: ${}".format(std_price))
-
-输出数据：
-Statistics for Boston housing dataset:
-
-Minimum price: $105000
-Maximum price: $1024800
-Mean price: $454342.9447852761
-Median price $438900.0
-Standard deviation of prices: $165171.13154429474
-
-以上的数据能够大致的给我们提供一个参考，就针对这几个影响因素的对于房价的影响来看，‘RM’和‘MEDV’成正比例关系，房间数越多，则房价售价越高，‘LSTAT’对于‘MEDV’的影响则不然，比例越高，则售价越低。此外，‘PTRATIO’则更多的呈现一个正态分布，随着比例达到一定的数值之后，房价会下降，在此之前则呈现上升趋势。
+以上算得的数据能够大致的给我们提供一个参考，就针对这几个影响因素的对于房价的影响来看，‘RM’和‘MEDV’成正比例关系，房间数越多，则房价售价越高，‘LSTAT’对于‘MEDV’的影响则不然，比例越高，则售价越低。此外，‘PTRATIO’则更多的呈现一个正态分布，随着比例达到一定的数值之后，房价会下降，在此之前则呈现上升趋势。
 
 
 一个模型的质量好坏需要对他进行训练和测试，我们可以通过决定系数R2来对于模型性能进行衡量。R2的值范围从0到1，它捕获目标变量的预测值和实际值之间的平方相关性的百分比。R2为0的模型并不比总是预测目标变量均值的模型好，而R2为1的模型则完美地预测了目标变量。当使用这个模型时，0到1之间的任何值表示目标变量中有多少百分比可以被特征解释。一个模型的R2也可以是负的，这表明该模型比总是预测平均值的模型糟糕得多。
 
-下面是对数据点性能分数进行分配：
-# TODO: Import 'r2_score'
-from sklearn.metrics import r2_score
-
-def performance_metric(y_true, y_predict):
-    """ Calculates and returns the performance score between 
-        true and predicted values based on the metric chosen. """
-    
-    # TODO: Calculate the performance score between 'y_true' and 'y_predict'
-    score = r2_score(y_true, y_predict)
-    
-    # Return the score
-    return score
-
-# Calculate the performance of this model
-score = performance_metric([3, -0.5, 2, 7, 4.2], [2.5, 0.0, 2.1, 7.8, 5.3])
-print("Model has a coefficient of determination, R^2, of {:.3f}.".format(score))
-
-
-通过上述的程序，我们可以计算出R2的值为0.923.
+下面是对数据点性能分数进行分配。本例中的房价预测属于回归问题，要判断模型预测值与实际值的拟合程度，可以使用**R2**分数进行评价。R2是决定系数,在统计学中，它表征回归方程多大程度上解释了因变量的变化，可用来表示表示对模型拟合程度的好坏，其取值范围是0~1，R2等于1表示模型可以100%解释目标值变化，R2等于0表示模型完全不能解释目标值的变化通过的程序，我们可以计算出R2的值为0.923.
 可以发现这个值已经极度的贴近1，这说明我们的这个模型的预测优异。
 
 
-接下来我们需要对数据集进行划分，分为训练集和测试集，数据集划分需要两个数据集都能够很好的反应数据的趋势和状况，一般来说，训练集约占8成，测试集占2成。将数据集划分为训练集和测试集的好处:既可以进行训练，又可以进行测试，不受干扰，训练模型可以有效验证。使用部分训练集进行测试的缺点:该模型是基于训练集的，使用训练集进行测试肯定会得到较好的结果，不能判断训练模型的优劣。具体代码如下：
 
-# TODO: Import 'train_test_split'
-from sklearn.model_selection import train_test_split
-# TODO: Shuffle and split the data into training and testing subsets
-X_train, X_test, y_train, y_test = train_test_split(features, prices, test_size=0.2,random_state=1)
 
-# Success
-print("Training and testing split was successful.")
+2. 分析数据
+
+接下来我们需要对数据集进行划分，分为训练集和测试集，数据集划分需要两个数据集都能够很好的反应数据的趋势和状况，一般来说，训练集约占8成，测试集占2成。将数据集划分为训练集和测试集的好处:既可以进行训练，又可以进行测试，不受干扰，训练模型可以有效验证。使用部分训练集进行测试的缺点:该模型是基于训练集的，使用训练集进行测试肯定会得到较好的结果，不能判断训练模型的优劣。其中：
+features 表示数据中的‘特征’，在第一步中已经划分为单独的变量
+prices 表示数据的‘值’，在第一步中已经划分为单独的变量
+test_size 是0~1之间的数字，表示使用多少数据进行验证，如test_size=0.2表示使用20%的数据进行验证，使用80%的数据进行训练
+random_state 表示是否随机划分训练集与测试集，若ransom_state=0，则会随机划分测试集与训练集。随机划分的结果就是会使每次训练的分数不同，程序每运行一次，训练分数就会变化。若使random_state =1(或其他非零数)，则无论程序运行多少次，分数都是相同的。
+训练集会把特征和结果同时给到模型，让模型找到一个可以比较好的拟合参数，训练集的目的就是就是使模型的Features和Values尽可能的拟合。
+
+
+
+验证集只会把特征给到模型，模型会产生预测值，再将预测值与实际值相比较，通过得分判定模型对于验证集的拟合情况，来看模型的好坏。
+
+模型对于数据的拟合情况不好，可以分为两类：过拟合与欠拟合。
+
+
+3.模型衡量标准
+
 
 下面我们要生成不同深度下的决策树图形，在这里我们分别选择了最大深度为1,3,6，10四种情况，来分别分析测试集和训练集的学习曲线，阴影区域表示其不确定性。挑选最大深度3这组曲线进行分析可以发现，随着训练数据的增加，训练集曲线的得分趋于稳定，在0.8左右，验证集的得分也趋于接近0.8。可以看出，训练集数据得分趋于稳定，增加训练数据并不能提高模型的性能。
 当模型的最大深度为1时，模型的预测偏差较大，因为R2得分较低，表明拟合不足。模型的最大深度为10时,有一个大的方差模型的预测,因为成绩的训练集与测试集的图像中,红色和绿色线之间的距离随着深度增加而延长。
 
-在项目的最后一部分中，我们使用来自fit_model的优化模型构建一个模型，并对目标的特性集进行预测。在将所有内容结合在一起后，使用决策树算法训练一个模型。为了确保生成了一个优化的模型，可以使用网格搜索技术对模型进行训练，以优化决策树的'max_depth'参数。'max_depth'参数可以被认为是决策树算法在做出预测之前允许询问关于数据的多少个问题。决策树是被称为监督学习算法的一类算法的一部分。下面是应用fit_model的具体算法：
-# TODO: Import 'make_scorer', 'DecisionTreeRegressor', and 'GridSearchCV'
-from sklearn.model_selection import GridSearchCV
-from sklearn.model_selection import ShuffleSplit
-from sklearn.tree import DecisionTreeRegressor
-from sklearn.metrics import make_scorer
 
-def fit_model(X, y):
-    """ Performs grid search over the 'max_depth' parameter for a 
-        decision tree regressor trained on the input data [X, y]. """
+然后生成了复杂度曲线。从复杂度曲线可以看出，max_depth = 5时，Validation Score最高。当最大深度为1时训练模型，Training Score和Validation Score都较低，出现了欠拟合的情况，模型出现了比较大的偏差（bias）；以最大深度为10训练模型，Tarining Score较高而Validation Score较低，模型出现过拟合的情况，有比较大的方差（variance）。
+
+训练误差与测试误差相差较远时（训练集R2分数较高，而验证集R2分数较低），模型有方差（variance），方差较大表示模型过拟合。
+
+训练误差与测试误差相差都比较大时（训练集与验证集R2分数都较低），模型有偏差（bias），偏差较大表示模型欠拟合。
+
+为了权衡模型的偏差（bias）与方差（variance），观察图中Tarin Score与Validation Score，我们认为Max_depth=5时模型拟合度最好。
+
+
+
+4.选择最优参数
+
+在项目的最后一部分中，我们使用来自fit_model的优化模型构建一个模型，并对目标的特性集进行预测。使用ShuffleSplit随机排列交叉验证。ShuffleSplit会生成一个用户给定数量的独立的训练或测试数据划分。样例首先被打散然后划分为一对训练测试集合。然后把数据集分成n份，取test_size份作为测试集，train_size份作为训练集。相较于KFold交叉验证更加灵活。
+
+cross_validator参数表示使用的交叉验证方法，本例中定义为10折交叉验证，默认为3折交叉验证；
+regressor参数表示使用的回归函数，本例使用决策树回归；
+params参数表示要使用交叉验证的参数，本例中的参数为决策树的最大深度（max_depth）使用字典表示；
+scoring_fnc表示评分函数，本例使用R2分数
+
+在将所有内容结合在一起后，使用决策树算法训练一个模型。为了确保生成了一个优化的模型，可以使用网格搜索技术对模型进行训练，以优化决策树的'max_depth'参数。'max-depth'参数可以被认为是决策树算法在做出预测之前允许询问关于数据的多少个问题。决策树是被称为监督学习算法的一类算法的一部分。
+从结果来看，使用网格搜索所得出的最优参数是max_depth=5。
+
+5.做出预测
+    通过以上步骤，我们就已经成功的对一个模型进行了训练，后面当我们进行训练时，可以根据输入的数据，做出预测。下面是根据这个模型做的一个售价预测
     
-    # Create cross-validation sets from the training data
-    cv_sets = ShuffleSplit(n_splits = 10, test_size = 0.20, random_state = 0)
 
-    # TODO: Create a decision tree regressor object
-    regressor = DecisionTreeRegressor()
-
-    # TODO: Create a dictionary for the parameter 'max_depth' with a range from 1 to 10
-    params =  {'max_depth':[1,2,3,4,5,6,7,8,9,10]}
-
-    # TODO: Transform 'performance_metric' into a scoring function using 'make_scorer' 
-    scoring_fnc = make_scorer(score_func = performance_metric)
-
-    # TODO: Create the grid search cv object --> GridSearchCV()
-    # Make sure to include the right parameters in the object:
-    # (estimator, param_grid, scoring, cv) which have values 'regressor', 'params', 'scoring_fnc', and 'cv_sets' respectively.
-    grid =  GridSearchCV(estimator = regressor,
-                        param_grid = params,
-                        scoring = scoring_fnc,
-                        cv = cv_sets)
-
-    # Fit the grid search object to the data to compute the optimal model
-    grid = grid.fit(X, y)
-
-    # Return the optimal model after fitting the data
-    return grid.best_estimator_
-
-
-    通过以上步骤，我们就已经成功的对一个模型进行了训练，后面当我们进行训练时，可以根据输入的数据，做出预测。下面是根据这个模型做的一个售价预测：
-    # Produce a matrix for client data
-client_data = [[5, 17, 15], # Client 1
-               [4, 32, 22], # Client 2
-               [8, 3, 12]]  # Client 3
-
-# Show predictions
-for i, price in enumerate(reg.predict(client_data)):
-    print("Predicted selling price for Client {}'s home: ${:,.2f}".format(i+1, price))
-
-    最后输出的结果如下：
-Predicted selling price for Client 1's home: $421,369.57
-Predicted selling price for Client 2's home: $227,141.86
-Predicted selling price for Client 3's home: $933,975.00
-
-预测的结果和实际房价差距很小，预测精度很高。
+    
+    最后输出的结预测的结果和实际房价差距很小，预测精度很高。
+    
+之后我们还尝试了Ir,rr回归模型进行预测但都出现了差错，最后预测误差太大。
